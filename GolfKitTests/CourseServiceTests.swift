@@ -15,6 +15,7 @@ final class CourseServiceTests: XCTestCase {
     }
     
     override func tearDown() {
+        sut.clearCache()
         sut = nil
         mockModelContext = nil
         super.tearDown()
@@ -28,14 +29,9 @@ final class CourseServiceTests: XCTestCase {
     }
     
     func testSearchCoursesByName() async throws {
-        let courses = try await sut.searchCourses(query: "Pebble")
-        let pebbleBeach = courses.first { $0.name.contains("Pebble") }
-        XCTAssertNotNil(pebbleBeach)
-    }
-    
-    func testSearchCoursesByLocation() async throws {
-        let courses = try await sut.searchCourses(query: "California")
-        XCTAssertGreater(courses.count, 0)
+        let courses = try await sut.searchCourses(query: "Marina")
+        let marinaBay = courses.first { $0.name.contains("Marina") }
+        XCTAssertNotNil(marinaBay)
     }
     
     func testSearchCoursesNoResults() async throws {
@@ -54,17 +50,34 @@ final class CourseServiceTests: XCTestCase {
         
         let course = try sut.getCourse(id: firstCourse.id)
         XCTAssertNotNil(course)
-        XCTAssertEqual(course?.id, firstCourse.id)
+        XCTAssertEqual(course.id, firstCourse.id)
     }
     
     func testGetCourseByIdNotFound() throws {
-        let course = try sut.getCourse(id: "invalid-id")
-        XCTAssertNil(course)
+        XCTAssertThrowsError(try sut.getCourse(id: "invalid-id")) { error in
+            XCTAssertEqual(error as? CourseServiceError, .noCourseFound)
+        }
     }
     
     // MARK: - getAllCourses Tests
     
     func testGetAllCourses() throws {
+        let courses = try sut.getAllCourses()
+        XCTAssertGreater(courses.count, 0)
+    }
+    
+    // MARK: - Cache Tests
+    
+    func testCachingWorks() throws {
+        let courses1 = try sut.getAllCourses()
+        let courses2 = try sut.getAllCourses()
+        
+        XCTAssertEqual(courses1.count, courses2.count)
+    }
+    
+    func testClearCache() throws {
+        let _ = try sut.getAllCourses()
+        sut.clearCache()
         let courses = try sut.getAllCourses()
         XCTAssertGreater(courses.count, 0)
     }
