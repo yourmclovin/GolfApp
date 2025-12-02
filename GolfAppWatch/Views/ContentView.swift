@@ -2,33 +2,23 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @State private var selectedTab: Tab = .scoring
     @Query var rounds: [Round]
     
+    enum Tab {
+        case scoring
+        case stats
+    }
+    
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 12) {
-                Text("Golf Rounds")
-                    .font(.headline)
-                
-                if rounds.isEmpty {
-                    Text("No rounds yet")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                } else {
-                    List(rounds.sorted { $0.date > $1.date }.prefix(5)) { round in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Score: \(round.totalScore)")
-                                .font(.caption)
-                                .bold()
-                            Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                                .font(.caption2)
-                                .foregroundColor(.gray)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Stats")
+        TabView(selection: $selectedTab) {
+            WatchRoundScoringView()
+                .tag(Tab.scoring)
+            
+            WatchStatsView(rounds: rounds)
+                .tag(Tab.stats)
         }
+        .tabViewStyle(.carousel)
     }
 }
 
